@@ -72,7 +72,14 @@ for shortFilm in shortFilms:
     print("Runtime:{}".format(shortFilm[0]))
     print('')
 
-
+#Display Film and Director
+cursor.execute("SELECT film_director, film_name FROM film ORDER BY film_director;")
+print("--DISPLAYING Directors RECORDS in order--")
+directors = cursor.fetchall()
+for director in directors:
+    print("Film Name: {}".format(director[1]))
+    print("Director: {}".format(director[0]))
+    print("")
 
 
    #finally:
