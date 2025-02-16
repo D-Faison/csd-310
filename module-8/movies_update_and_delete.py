@@ -1,4 +1,4 @@
-#DeJanae Faison 2/16/2024
+#DeJanae Faison 2/16/2024 Assignment 8.2
 import mysql.connector
 from mysql.connector import errorcode
 
@@ -39,3 +39,19 @@ except mysql.connector.Error as err:
         print(err)
 
 cursor = db.cursor()
+
+#Show Films Functions
+def show_films(cursor, title):
+    
+
+    cursor.execute("SELECT film_name as Name, film_director as Director, genre_name as Genre, studio_name as 'Studio Name' FROM film INNER JOIN genre ON film.genre_id=genre.genre_id INNER JOIN studio ON film.studio_id=studio.studio_id")
+    
+    films = cursor.fetchall()
+    print("\n--{}--".format(title))
+
+    for film in films:
+        print("Film name: {}\nDirector: {}\nGenre Name ID: {}\nStudio Name: {}\n".format(film[0],film[1],film[2],film[3]))
+
+
+
+show_films(cursor,"DISPLAYING FILMS~ AFTER DELETE-")
