@@ -1,5 +1,5 @@
 #DeJanae Faison 2/16/24 Movies Table Queries
-
+#Displaying the information from the sql movie database in a particular format
 import mysql.connector
 from mysql.connector import errorcode
 
