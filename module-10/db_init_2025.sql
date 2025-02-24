@@ -90,13 +90,15 @@ CREATE TABLE trip (
 CREATE TABLE trip_member (
 	id					INT 			NOT NULL	AUTO_INCREMENT,
 	trip_id				INT				NOT NULL,
+	first_name			VARCHAR(75),			  -- name only filled if no cust_id
+	last_name			VARCHAR(75),
     date_of_birth		DATE			NOT NULL,
     reservations		VARCHAR(255),			  -- empty until reservations are booked
     waiver				MEDIUMBLOB		NOT NULL,
     email 				VARCHAR(50),			  -- email & phone only filled if no cust_id
     phone_number 		CHAR(12),
     cust_id		 		INT,					  -- only one trip member is required to have a customer account
-    passport_status		VARCHAR(25) 	NOT NULL,
+    passport_status		VARCHAR(255) 	NOT NULL,
     emergency_number	CHAR(12)		NOT NULL,
     emergency_name  	VARCHAR(75)     NOT NULL,
     emergency_relation	VARCHAR(25)		NOT NULL,
@@ -112,12 +114,14 @@ CREATE TABLE trip_member (
 	FOREIGN KEY(cust_id)
 		REFERENCES customer(cust_id),
 	
-	-- ensure there's either a cust_id OR email and phone number
+	-- ensure there's either a cust_id OR name/contact info
 	-- this prevents duplication of info in the customer table
 	CONSTRAINT check_cust_id CHECK(
-	(cust_id IS NULL AND email IS NOT NULL AND phone_number IS NOT NULL)
+	(cust_id IS NULL AND email IS NOT NULL AND phone_number IS NOT NULL
+		AND first_name IS NOT NULL AND last_name IS NOT NULL)
 	OR
-	(cust_id IS NOT NULL and email IS NULL and phone_number IS NULL))
+	(cust_id IS NOT NULL and email IS NULL and phone_number IS NULL
+		AND first_name IS NULL AND last_name IS NULL))
 );
 
 -- create order_inventory table and composite primary key
@@ -158,7 +162,7 @@ CREATE TABLE order_item (
 	product_code		VARCHAR(75)		NOT NULL,
 	product_condition	VARCHAR(9)		NOT NULL,
     quantity			INT 			NOT NULL,
-    ship_tracking 		INT 			NOT NULL,
+    ship_tracking 		VARCHAR(75),			  -- empty for in-store pickup
 	order_id			INT				NOT NULL,
     
     PRIMARY KEY(id),
@@ -222,7 +226,7 @@ CREATE TABLE guide_req (
 CREATE TABLE guide_req_tracker (
 	id				INT				NOT NULL	AUTO_INCREMENT,
 	complete_date	DATE,					  -- can be empty if member has not completed it yet
-	status			VARCHAR(25)		NOT NULL,
+	status			VARCHAR(255)	NOT NULL,
 	req_id			INT				NOT NULL,
 	staff_id		INT				NOT NULL,
 	
@@ -245,7 +249,19 @@ VALUES
 ("John", "Doe", "555-555-1234", "123 West Adventure Terrace", 
 	"Denver", "CO", 80014, "john.doe.3535@gmail.com"),
 ("Sally", "Ride", "555-555-2323", "418 Slip St Apt 3",
-	"Palatine", "IL", 60067, "sally.rides.again@gmail.com");
+	"Palatine", "IL", 60067, "sally.rides.again@gmail.com"),
+    
+("Khloe", "Arson", "856-643-1224", "455 West Adventure Terrace", 
+	"Denver", "CO", 80014, "sillyLady@gmail.com"),
+    
+("Matthew", "Lanes", "122-877-2332", "18 Huntings St", 
+	"Denver", "CO", 80014, "marshallMatthews@yahoo.com"),
+    
+("Tyson", "Conners", "766-211-9055", "72 Washington Rd", 
+	"Denver", "CO", 80014, "knockOut@gmail.com"),
+    
+("Sandra", "Griffin", "209-121-9800", "489 Georges Ave", 
+	"Denver", "CO", 80014, "quahougSquare@gmail.com");
 
 -- insert staff, example with all fields and with no nick name/bonus
 INSERT INTO staff 
@@ -258,24 +274,142 @@ VALUES
 	48000, 50, "Guide"),
 ("Blythe", NULL, "Timmerson", "555-555-8111", "2380 Chipper Ave",
 	"Denver", "CO", 80016, "blythe@outlandadventures.com",
-	75000, NULL, "Owner");
+	75000, NULL, "Owner"),
+("Michael", "Mickey", "Donalds", "578-902-0021", "90 Oliver Dr",
+	"Denver", "CO", 80016, "donaldDuck@outlandadventures.com",
+	38000, 50, "Guide"),
+("Fredrick", NULL, "Peterson", "728-351-7920", "143 Douglas St",
+	"Denver", "CO", 80016, "fPeterson2025@outlandadventures.com",
+	52000, NULL, "Accountant"),
+("Alexi", "Lexi", "Tysons", "908-545-4001", "404 Dashing Rd",
+	"Denver", "CO", 80016, "tysonL@outlandadventures.com",
+	32000, 50, "Apprentence"),
+("Karen", NULL, "Allison", "785-008-8765", "5800 Parkings St",
+	"Denver", "CO", 80016, "allison@outlandadventures.com",
+	51000, NULL, "Accountant");
 
-/*
+-- insert trips, select statements needed bc of auto-increment of primary keys
 INSERT INTO trip 
-(destination, trip_start, trip_end, staff_id, unit_fee, cust_primary)
+(destination, trip_start, trip_end, 
+	staff_id, 
+	unit_fee, 
+	cust_primary)
 VALUES 
 ("Zimbabwe, Africa", "2024-09-15", "2024-09-21", 
-	(
-);
+	(select staff_id from staff where nick_name = "Mac"),
+	200,
+	(select cust_id from customer where first_name = "John"));
 
--- example of someone with an account/customer id
-INSERT INTO trip_members (
-	trip_id,
-	date_of_birth,
-	reservations,
-	waiver,
+-- insert trip members, example with/without customer account
+INSERT INTO trip_member 
+(trip_id, 
+	date_of_birth, reservations, waiver,
 	cust_id,
-	passport_status,
-	emergency_number,
-	emergenc
-*/
+	passport_status, cost, phone_number, email, 
+	first_name, last_name, emergency_number, emergency_name, emergency_relation)
+VALUES
+((select trip_id from trip where trip_start = "2024-09-15"),
+	"1992-04-15", "American Airlines MDABRG", "pretend this is a data blob",
+	(select cust_id from customer where first_name = "John"),
+	"Complete", 653.12, NULL, NULL,
+	NULL, NULL, "555-555-8713", "Amanda Smith", "mother"),
+((select trip_id from trip where trip_start = "2024-09-15"),
+	"1995-08-23", "American Airlines MDABRG", "pretend this is a data blob",
+	NULL,
+	"Complete", 624.73, "555-555-4376", "melanie.harmon.45@gmail.com",
+	"Melanie", "Harmon", "555-555-1899", "Morgan Harmon", "sister");
+
+-- insert order inventory (I looked on REI to find this example)
+-- product_condition can be new, used-fair, or used-good
+INSERT INTO order_inventory
+(product_code, product_condition, name, unit_price,
+	stock, weight, dimensions,
+	description)
+VALUES
+("gregory-amber-65-pack-womens", "new", "Amber 65 Pack - Women's", 239.95,
+	10, 4, "29.5 x 13 x 12 in",
+	"Providing the gear space needed for mega-treks of all types, the women's Gregory Amber 65 pack offers easy top loading and bottom access, while the breathable VersaFit suspension adjusts your fit."),
+("Branzo-48", "used", "Branzo Bamboo Walking Stick", 75.65,
+	4, 10, "49 x 5 x 12 in",
+	"So whether you find your way along demanding hiking trails or the around the city block, these staffs are over-engineered for the task"),
+("Ozark-10-Tent", "new", "Ozark Camping Tent- 10 person Cabin", 196.78,
+	2, 31, "14 x 10 x 23 in",
+	"The Ozark Trail 10-Person Instant Cabin Tent is the perfect tent to take with you on your next outdoor adventure. This tent sets up in under two minutes with the innovative instant frame design for easy and fun camping"),
+("RailRoad-Lantern", "New", "RailRoad Rechargeable Camping Lantern", 99.99,
+	12, 2, "6 x 5 x 13 in",
+	"You'll use this lantern in your home when you are not at camp.  Check out the details of the seeded glass and the fine craftsmanship and quality materials."),
+    
+("Corzoi-38", "New", "Corzoi Bamboo Walking Stick", 90.87,
+	13, 8, "39 x 5 x 6 in",
+	"The traditional handle is the most commonly known in hiking sticks. No-frills, just the straight or natural shape of the sapling or lumber, this is the most popular style when it comes to walking sticks."),
+
+("TrailOrange", "New", "Trail 25 Pack DayPack Orange ", 99.95,
+	6, 2, "18 x 13 x 8 in",
+	"Keep your day's gear within easy reach in the REI Co-op Trail 25 pack.")  ;
+
+-- insert orders, examples for shipped vs in-store pickup
+INSERT INTO orders
+(order_date, ship_street,
+	cust_id,
+	ship_city, ship_state, ship_zip)
+VALUES
+("2024-11-13", "333 Maple Lane Unit 1204",
+	(select cust_id from customer where first_name = "Sally"),
+	"Biloxi", "MS", 39531),
+("2025-01-18", NULL,
+	(select cust_id from customer where first_name = "John"),
+	NULL, NULL, NULL);
+
+-- insert order items
+INSERT INTO order_item
+(product_code, product_condition, quantity, ship_tracking,
+	order_id)
+VALUES
+("gregory-amber-65-pack-womens", "new", 1, "pretend tracking number",
+	(select order_id from orders where order_date = "2024-11-13"));
+
+-- insert rentals
+INSERT INTO rental
+(rental_date, start_date, end_date,
+	cust_id)
+VALUES
+("2025-02-20", "2025-02-20", "2025-02-24",
+	(select cust_id from customer where first_name = "Sally"));
+
+-- insert rental inventory; examples of never-been-rented vs currently rented item
+INSERT INTO rental_inventory
+(initial_use, rate, product_condition, product_code,
+	rental_id)
+VALUES
+(NULL, 8.75, "new", "gregory-amber-65-pack-womens",
+	NULL),
+("2023-02-05", 8.75, "good", "gregory-amber-65-pack-womens",
+	(select rental_id from rental where rental_date = "2025-02-20"));
+
+-- insert guide reqs
+INSERT INTO guide_req
+(name, valid_months, governing_org,
+	description)
+VALUES
+("CPR", 24, "https://www.redcross.org",
+	"Guides need to be able to perform CPR in the event of an emergency."),
+("Wilderness First Aid", 12, "https://www.redcross.org",
+	"Guides need to be able to treat anything from scratches to illness."),  
+("Leave No Trace Awareness", 24, "https://lnt.org/get-involved/training-courses/",
+	"Understanding the importance of protecting nature by leaving no trace"),
+("Wilderness Fire Safety", 4, "https://www.fs.usda.gov/managing-land/fire/training",
+	"Only you can prevent forest fires.") ,
+("WFA Certificate", 24, "Wilderness Guide Association",
+	"Guides need a basic understanding of reading maps, feild training etc"),
+("WGA Training", 48, "Wilderness Guide Association",
+	"Phyiscally be able to withstand the job") ;
+
+-- insert guide req tracker entries
+INSERT INTO guide_req_tracker
+(complete_date, status,
+	req_id,
+	staff_id)
+VALUES
+("2023-03-18", "Certified",
+	(select req_id from guide_req where name = "CPR"),
+	(select staff_id from staff where nick_name = "Mac"));
