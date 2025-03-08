@@ -65,6 +65,15 @@ for inventoryAge in inventoryAges:
         print("Name:{}".format(inventoryAge[2]))
         print("Initial Use:{}\n".format(inventoryAge[1]))
         
+#Display inventory items more than five years old
+cursor.execute("SELECT rental_inventory.rental_id, rental_inventory.initial_use, order_inventory.name FROM rental_inventory INNER JOIN order_inventory ON rental_inventory.product_code = order_inventory.product_code HAVING initial_use < CURDATE() - INTERVAL 54 MONTH;")
+inventoryAgesB = cursor.fetchall()
+print("--Equipment 4 Years and 6 months Old:")
+for inventoryageB in inventoryAgesB:
+        print("\nRental ID:{}".format(inventoryageB[0]))
+        print("Name:{}".format(inventoryageB[2]))
+        print("Initial Use:{}\n".format(inventoryageB[1]))   
+
 
 # Close the database
 #finally:
